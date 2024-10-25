@@ -1,11 +1,10 @@
-require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
 const cors = require('cors');
+require('dotenv').config();
 const connectDB = require('./config/database');
 const sessionConfig = require('./utils/sessionConfig');
 const errorHandler = require('./middleware/errorHandler');
-
 const UtilisateursRoutes = require('./routes/UtilisateursRoutes');
 const messageRoutes = require('./routes/MessageFooterRoutes');
 const InspRoutes = require('./routes/respo_InspectionRoutes');
@@ -20,7 +19,7 @@ connectDB();
 
 // Middleware
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: ['http://localhost:3000', 'http://localhost:5174'], // Ajoute l'URL de ton frontend ici
   credentials: true
 }));
 app.use(express.json());
