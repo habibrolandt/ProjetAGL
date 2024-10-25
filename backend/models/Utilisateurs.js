@@ -8,6 +8,7 @@ const utilisateurSchema = new mongoose.Schema({
   role: { type: String, default: 'utilisateur' }
 });
 
+// Hash le mot de passe avant de sauvegarder
 utilisateurSchema.pre('save', async function (next) {
   if (this.isModified('password')) {
     const salt = await bcrypt.genSalt(10);

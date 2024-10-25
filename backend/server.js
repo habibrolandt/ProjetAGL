@@ -1,51 +1,41 @@
 require('dotenv').config();
 const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
 const session = require('express-session');
+const cors = require('cors');
+const connectDB = require('./config/database');
+const sessionConfig = require('./utils/sessionConfig');
+const errorHandler = require('./middleware/errorHandler');
+
 const UtilisateursRoutes = require('./routes/UtilisateursRoutes');
+const messageRoutes = require('./routes/MessageFooterRoutes');
+const InspRoutes = require('./routes/respo_InspectionRoutes');
+const ProdRoutes = require('./routes/respo_ProductionRoutes');
+const AdminRoutes = require('./routes/AdministrateurRoutes');
+const FilmRoutes = require('./routes/FilmRoutes'); // Nouvelle route pour les films
 
 const app = express();
 
+// Connexion à la base de données
+connectDB();
+
 // Middleware
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
   credentials: true
 }));
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'secret_de_session',
-  resave: false,
-  saveUninitialized: true,
-  cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 } // 24 heures
-}));
-
-// Connexion à MongoDB
-mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log('Connecté à MongoDB'))
-  .catch(err => console.error('Erreur de connexion à MongoDB:', err));
-
-// Logging middleware
-app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
-  next();
-});
+app.use(session(sessionConfig));
 
 // Routes
 app.use('/api/users', UtilisateursRoutes);
-app.use('/api/films', FilmRoutes);
-
-// Route de test
-app.get('/api/test', (req, res) => {
-  res.json({ message: 'Le serveur fonctionne correctement' });
-});
+app.use('/api/messages', messageRoutes);
+app.use('/api/respos', InspRoutes);
+app.use('/api/Prod', ProdRoutes);
+app.use('/api/admin', AdminRoutes);
+app.use('/api/films', FilmRoutes); // Nouvelle route pour les films
 
 // Gestion des erreurs
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ message: 'Erreur serveur', error: err.message });
-});
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Serveur en cours d'exécution sur le port ${PORT}`));
