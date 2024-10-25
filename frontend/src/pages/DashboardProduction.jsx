@@ -72,7 +72,7 @@ export default function DashboardProduction({ user, onLogout }) {
       case 'listeProductions':
         return (
           <div className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold mb-4">Liste des films a plannifier</h2>
+            <h2 className="text-xl font-semibold mb-4">Liste des films</h2>
             <table className="w-full">
               
               <tbody>
