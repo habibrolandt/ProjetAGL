@@ -17,12 +17,14 @@ exports.inscription = async (req, res) => {
       return res.status(400).json({ message: 'Cet email est déjà utilisé' });
     }
 
-    const utilisateur = new Utilisateur({ name, email, password, role: 'utilisateur' });
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const utilisateur = new Utilisateur({ name, email, password: hashedPassword });
     await utilisateur.save();
 
     res.status(201).json({ message: 'Inscription réussie' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Erreur lors de l\'inscription:', error);
+    res.status(500).json({ message: 'Erreur lors de l\'inscription' });
   }
 };
 
@@ -30,65 +32,38 @@ exports.connexion = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ message: 'Tous les champs sont requis' });
+    let user = await Utilisateur.findOne({ email });
+    let isAdmin = false;
+
+    if (!user) {
+      user = await Administrateur.findOne({ email });
+      isAdmin = true;
     }
 
-    // Vérifier d'abord si c'est un administrateur
-    const admin = await Administrateur.findOne({ email });
-    console.log('Admin trouvé:', admin);
-
-    if (admin) {
-      console.log('Comparaison des mots de passe admin:', password, admin.password);
-      if (admin.password === password) {
-        console.log('Connexion admin réussie');
-        req.session.userId = admin._id;
-        req.session.userRole = 'admin';
-        return res.json({
-          message: 'Connexion réussie',
-          user: {
-            id: admin._id,
-            email: admin.email,
-            role: 'admin',
-            name: 'Administrateur'
-          }
-        });
-      } else {
-        console.log('Mot de passe admin incorrect');
-        return res.status(401).json({ message: 'Email ou mot de passe incorrect' });
-      }
-    }
-
-    // Vérification de l'utilisateur normal
-    const utilisateur = await Utilisateur.findOne({ email });
-    console.log('Utilisateur trouvé:', utilisateur);
-
-    if (!utilisateur) {
-      console.log('Aucun utilisateur trouvé avec cet email');
+    if (!user) {
       return res.status(401).json({ message: 'Email ou mot de passe incorrect' });
     }
 
-    if (utilisateur.password !== password) {
-      console.log('Mot de passe utilisateur incorrect');
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
       return res.status(401).json({ message: 'Email ou mot de passe incorrect' });
     }
 
-    console.log('Connexion utilisateur réussie');
-    req.session.userId = utilisateur._id;
-    req.session.userRole = utilisateur.role;
+    req.session.userId = user._id;
+    req.session.userRole = isAdmin ? 'admin' : user.role;
 
     res.json({
       message: 'Connexion réussie',
       user: {
-        id: utilisateur._id,
-        name: utilisateur.name,
-        email: utilisateur.email,
-        role: utilisateur.role
+        id: user._id,
+        name: user.name || 'Admin',
+        email: user.email,
+        role: isAdmin ? 'admin' : user.role
       }
     });
   } catch (error) {
-    console.error('Erreur de connexion:', error);
-    res.status(500).json({ message: 'Erreur interne du serveur' });
+    console.error('Erreur lors de la connexion:', error);
+    res.status(500).json({ message: 'Erreur lors de la connexion' });
   }
 };
 
@@ -101,77 +76,10 @@ exports.deconnexion = (req, res) => {
   });
 };
 
-exports.creerAdmin = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ message: 'Tous les champs sont requis' });
-    }
-
-    const adminExiste = await Administrateur.findOne({ email });
-    if (adminExiste) {
-      return res.status(400).json({ message: 'Cet email est déjà utilisé' });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const admin = new Administrateur({ email, password: hashedPassword });
-    await admin.save();
-
-    res.status(201).json({ message: 'Administrateur créé avec succès' });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-exports.getUtilisateur = async (req, res) => {
-  try {
-    const utilisateur = await Utilisateur.findById(req.session.userId).select('-password');
-    if (!utilisateur) {
-      return res.status(404).json({ message: 'Utilisateur non trouvé' });
-    }
-    res.json(utilisateur);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-exports.updateUtilisateur = async (req, res) => {
-  try {
-    const { name, email } = req.body;
-    const utilisateur = await Utilisateur.findByIdAndUpdate(
-      req.session.userId,
-      { name, email },
-      { new: true, runValidators: true }
-    ).select('-password');
-
-    if (!utilisateur) {
-      return res.status(404).json({ message: 'Utilisateur non trouvé' });
-    }
-
-    res.json(utilisateur);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-exports.deleteUtilisateur = async (req, res) => {
-  try {
-    const utilisateur = await Utilisateur.findByIdAndDelete(req.session.userId);
-    if (!utilisateur) {
-      return res.status(404).json({ message: 'Utilisateur non trouvé' });
-    }
-    req.session.destroy();
-    res.json({ message: 'Utilisateur supprimé avec succès' });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
 exports.getAllUsers = async (req, res) => {
   try {
-    const users = await Utilisateur.find().select('-password');
-    res.json(users);
+    const utilisateurs = await Utilisateur.find().select('-password');
+    res.json(utilisateurs);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -180,7 +88,8 @@ exports.getAllUsers = async (req, res) => {
 exports.createUser = async (req, res) => {
   try {
     const { name, email, password } = req.body;
-    const newUser = new Utilisateur({ name, email, password });
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = new Utilisateur({ name, email, password: hashedPassword });
     await newUser.save();
     res.status(201).json({ message: 'Utilisateur créé avec succès' });
   } catch (error) {
@@ -216,6 +125,7 @@ exports.deleteUser = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 exports.changeRole = async (req, res) => {
   try {
     const { id } = req.params;
@@ -243,5 +153,3 @@ exports.changeRole = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
-// Autres méthodes du contrôleur...

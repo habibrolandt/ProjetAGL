@@ -29,7 +29,7 @@ export default function Inscription({ closeModal, openModal }) {
 
   return (
     <div className="max-w-md mx-auto mt-8 p-6 bg-white rounded-lg shadow-xl">
-      <h2 className="text-2xl font-bold mb-4 text-center">Créer un compte</h2>
+      <h2 className="text-2xl font-bold mb-4  text-center">Créer un compte</h2>
       {message && (
         <div className={`p-4 mb-4 text-sm rounded-lg ${message.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
           {message.content}
@@ -79,18 +79,6 @@ export default function Inscription({ closeModal, openModal }) {
           S'inscrire
         </button>
       </form>
-      <p className="mt-4 text-center text-sm text-gray-600">
-        Déjà un compte ?{' '}
-        <button
-          onClick={() => {
-            closeModal();
-            openModal('connexion');
-          }}
-          className="font-medium text-blue-600 hover:text-blue-500"
-        >
-          Se connecter
-        </button>
-      </p>
     </div>
   );
 }

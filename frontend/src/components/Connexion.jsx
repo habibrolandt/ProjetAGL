@@ -17,7 +17,9 @@ export default function Connexion({ closeModal, setUser }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://localhost:5000/api/users/connexion', formData);
+      const response = await axios.post('http://localhost:5000/api/users/connexion', formData, {
+        withCredentials: true
+      });
       console.log('Réponse du serveur:', response.data);
       setMessage({ type: 'success', content: 'Connexion réussie' });
       const userData = response.data.user;
@@ -25,7 +27,6 @@ export default function Connexion({ closeModal, setUser }) {
       localStorage.setItem('user', JSON.stringify(userData));
       closeModal();
       
-      // Redirection basée sur le rôle de l'utilisateur
       switch (userData.role) {
         case 'admin':
           navigate('/admin-dashboard');
@@ -43,7 +44,7 @@ export default function Connexion({ closeModal, setUser }) {
       console.error('Erreur de connexion:', error);
       setMessage({ 
         type: 'error', 
-        content: error.response?.data?.message || 'Erreur de connexion: ' + error.message 
+        content: error.response?.data?.message || 'Erreur de connexion' 
       });
     }
   };

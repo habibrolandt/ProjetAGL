@@ -6,7 +6,6 @@ router.post('/inscription', UtilisateursController.inscription);
 router.post('/connexion', UtilisateursController.connexion);
 router.post('/deconnexion', UtilisateursController.deconnexion);
 
-// Nouvelles routes pour la gestion des utilisateurs
 router.get('/', UtilisateursController.getAllUsers);
 router.post('/', UtilisateursController.createUser);
 router.put('/:id', UtilisateursController.updateUser);
