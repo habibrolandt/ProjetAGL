@@ -16,8 +16,8 @@ console.log('URI MongoDB:', process.env.MONGODB_URI);
 async function connectToDatabase() {
   try {
     await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
+      // useNewUrlParser: true,
+      // useUnifiedTopology: true,
       serverSelectionTimeoutMS: 60000,
       socketTimeoutMS: 60000,
     });
@@ -33,8 +33,8 @@ async function insererAdmin() {
   try {
     console.log('Tentative d\'insertion de l\'administrateur...');
     const admin = new Administrateur({
-      email: 'h@gmail.com',
-      password: '102',
+      email: 'roland@gmail.com',
+      password: '1234',
       role: 'admin'
     });
 

@@ -10,7 +10,10 @@ const messageRoutes = require('./routes/MessageFooterRoutes');
 const InspRoutes = require('./routes/respo_InspectionRoutes');
 const ProdRoutes = require('./routes/respo_ProductionRoutes');
 const AdminRoutes = require('./routes/AdministrateurRoutes');
-const FilmRoutes = require('./routes/FilmRoutes'); // Nouvelle route pour les films
+const FilmRoutes = require('./routes/FilmRoutes');
+const planningRoutes = require('./routes/planningRoutes');
+const statsRoutes = require('./routes/statsRoutes');
+
 
 const app = express();
 
@@ -19,8 +22,8 @@ connectDB();
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:5173'], // Ajoute l'URL de ton frontend ici
-  credentials: true
+    origin: ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:5000'],
+    credentials: true
 }));
 app.use(express.json());
 app.use(session(sessionConfig));
@@ -31,7 +34,9 @@ app.use('/api/messages', messageRoutes);
 app.use('/api/respos', InspRoutes);
 app.use('/api/Prod', ProdRoutes);
 app.use('/api/admin', AdminRoutes);
-app.use('/api/films', FilmRoutes); // Nouvelle route pour les films
+app.use('/api/films', FilmRoutes);
+app.use('/api/plannings', planningRoutes);
+app.use('/api/stats', statsRoutes);
 
 // Gestion des erreurs
 app.use(errorHandler);

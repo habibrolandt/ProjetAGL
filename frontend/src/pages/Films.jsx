@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Play } from 'lucide-react';
 import Footer from '../components/Footer';
+import axios from 'axios';
 import techno from '../assets/Ressources/techno.jpg';
 import technoVidéo from '../assets/Ressources/technoVidéo.mp4';
 import joker from '../assets/Ressources/joker.jfif'
@@ -18,25 +19,30 @@ import sidemen from '../assets/Ressources/sidemen.jpeg'
 import divergente from '../assets/Ressources/Divergente.jpeg'
 
 const films = [
-  { id: 1, titre: "Film Joker", image: joker, horaires: ["15:00", "17:00", "19:00", "21:00"] },
-  { id: 2, titre: "Films", image: calla, horaires: ["15:00", "17:00", "19:00", "21:00"] },
-  { id: 3, titre: "Films Cargo", image: Cargo , horaires: ["15:00", "17:00", "19:00", "21:00"] },
-  { id: 4, titre: "Films Fast and Furious", image: Fast , horaires: ["15:00", "17:00", "19:00", "21:00"] },
-  { id: 5, titre: "Films GLASS", image: glass , horaires: ["15:00", "17:00", "19:00", "21:00"] },
-  { id: 6, titre: "Films SICARIO", image: sicario, horaires: ["15:00", "17:00", "19:00", "21:00"] },
-  { id: 7, titre: "Films HIDDEN FIGURES", image: hidden, horaires: ["15:00", "17:00", "19:00", "21:00"] },
-  { id: 8, titre: "Films Jumanji", image: jumanji, horaires: ["15:00", "17:00", "19:00", "21:00"] },
-  { id: 9, titre: "Films Ghosted", image: ghosted, horaires: ["15:00", "17:00", "19:00", "21:00"] },
-  { id: 10, titre: "Films RED NOTICE", image: red, horaires: ["15:00", "17:00", "19:00", "21:00"] },
-  { id: 11, titre: "Films SIDEMEN BECOME FARMERS", image: sidemen, horaires: ["15:00", "17:00", "19:00", "21:00"] },
-  { id: 12, titre: "Films Divergente", image: divergente, horaires: ["15:00", "17:00", "19:00", "21:00"] },
+  { id: 1, titre: "Film Joker", image: joker },
+  { id: 2, titre: "Films", image: calla },
+  { id: 3, titre: "Films Cargo", image: Cargo },
+  { id: 4, titre: "Films Fast and Furious", image: Fast },
+  { id: 5, titre: "Films GLASS", image: glass },
+  { id: 6, titre: "Films SICARIO", image: sicario },
+  { id: 7, titre: "Films HIDDEN FIGURES", image: hidden },
+  { id: 8, titre: "Films Jumanji", image: jumanji },
+  { id: 9, titre: "Films Ghosted", image: ghosted },
+  { id: 10, titre: "Films RED NOTICE", image: red },
+  { id: 11, titre: "Films SIDEMEN BECOME FARMERS", image: sidemen },
+  { id: 12, titre: "Films Divergente", image: divergente },
 ];
 
+const salles = ["Salle 1", "Salle 2", "Salle 3", "Salle 4", "Salle 5"];
+const jours = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
+
 export default function Films() {
-  const [dateSelectionnee, setDateSelectionnee] = useState('');
+  const [jourSelectionne, setJourSelectionne] = useState('');
   const [heureSelectionnee, setHeureSelectionnee] = useState('');
+  const [salleSelectionnee, setSalleSelectionnee] = useState('');
   const [videoVisible, setVideoVisible] = useState(false);
   const [recherche, setRecherche] = useState('');
+  const [plannings, setPlannings] = useState([]);
 
   useEffect(() => {
     const hash = window.location.hash;
@@ -46,13 +52,40 @@ export default function Films() {
         footer.scrollIntoView({ behavior: 'smooth' });
       }
     }
+    fetchPlannings();
   }, []);
 
+  const fetchPlannings = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/api/plannings');
+      setPlannings(response.data);
+    } catch (error) {
+      console.error('Erreur lors de la récupération des plannings:', error);
+    }
+  };
+
   const filmsFiltrés = useCallback(() => {
-    return films.filter(film => 
-      film.titre.toLowerCase().includes(recherche.toLowerCase())
-    );
-  }, [recherche]);
+    return films.filter(film => {
+      const planningsFilm = plannings.filter(p => p.film === film.titre);
+      
+      const matchRecherche = film.titre.toLowerCase().includes(recherche.toLowerCase());
+      const matchJour = !jourSelectionne || planningsFilm.some(p => new Date(p.date).getDay() === jours.indexOf(jourSelectionne));
+      const matchHeure = !heureSelectionnee || planningsFilm.some(p => p.heure === heureSelectionnee);
+      const matchSalle = !salleSelectionnee || planningsFilm.some(p => p.salle === salleSelectionnee);
+
+      return matchRecherche && matchJour && matchHeure && matchSalle;
+    });
+  }, [recherche, jourSelectionne, heureSelectionnee, salleSelectionnee, plannings]);
+
+  const getPlanning = (filmId) => {
+    return plannings.filter(planning => {
+      const filmTitre = films.find(f => f.id === filmId)?.titre;
+      const matchJour = !jourSelectionne || new Date(planning.date).getDay() === jours.indexOf(jourSelectionne);
+      const matchHeure = !heureSelectionnee || planning.heure === heureSelectionnee;
+      const matchSalle = !salleSelectionnee || planning.salle === salleSelectionnee;
+      return planning.film === filmTitre && matchJour && matchHeure && matchSalle;
+    });
+  };
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
@@ -102,13 +135,13 @@ export default function Films() {
           <div className="flex flex-wrap gap-4 mb-8">
             <select
               className="bg-gray-800 text-white p-2 rounded"
-              onChange={(e) => setDateSelectionnee(e.target.value)}
-              value={dateSelectionnee}
+              onChange={(e) => setJourSelectionne(e.target.value)}
+              value={jourSelectionne}
             >
-              <option value="">Choisir une date</option>
-              <option value="lun">Lundi</option>
-              <option value="mar">Mardi</option>
-              <option value="mer">Mercredi</option>
+              <option value="">Choisir un jour</option>
+              {jours.map((jour) => (
+                <option key={jour} value={jour}>{jour}</option>
+              ))}
             </select>
             <select
               className="bg-gray-800 text-white p-2 rounded"
@@ -120,6 +153,16 @@ export default function Films() {
               <option value="17:00">17:00</option>
               <option value="19:00">19:00</option>
               <option value="21:00">21:00</option>
+            </select>
+            <select
+              className="bg-gray-800 text-white p-2 rounded"
+              onChange={(e) => setSalleSelectionnee(e.target.value)}
+              value={salleSelectionnee}
+            >
+              <option value="">Choisir une salle</option>
+              {salles.map((salle) => (
+                <option key={salle} value={salle}>{salle}</option>
+              ))}
             </select>
           </div>
           <div className="flex justify-between items-center mb-4">
@@ -158,10 +201,10 @@ export default function Films() {
                     <img src={film.image} alt={film.titre} className="w-full h-64 object-cover rounded-lg mb-4" />
                     <h3 className="text-lg font-semibold mb-2">{film.titre}</h3>
                     <div className="flex flex-wrap gap-2">
-                      {film.horaires.map((heure, index) => (
-                        <button key={index} className="bg-gray-700 hover:bg-gray-600 text-white py-1 px-2 rounded text-sm">
-                          {heure}
-                        </button>
+                      {getPlanning(film.id).map((planning, index) => (
+                        <div key={index} className="bg-gray-700 text-white py-1 px-2 rounded text-sm">
+                          {jours[new Date(planning.date).getDay()]} - {planning.heure} - {planning.salle}
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -175,7 +218,9 @@ export default function Films() {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5 }}
             >
-              <p className="text-xl text-gray-400">Aucun film ne correspond à votre recherche.</p>
+              <p className="text-xl text-gray-400">
+                Aucun film ne correspond à votre recherche ou aux critères sélectionnés.
+              </p>
             </motion.div>
           )}
         </section>

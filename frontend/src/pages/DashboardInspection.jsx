@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Home, Edit, LogOut, BarChart2, Clipboard, CheckSquare, Calendar, Film, Plus, Search, Trash2 } from 'lucide-react';
-import axios from 'axios';
+import { useFilms } from '../contexts/FilmContext';
 import Inspec from '../assets/Ressources/Inspec.jpg';
 
 export default function DashboardInspection({ user, onLogout }) {
   const navigate = useNavigate();
+  const { films, ajouterFilm, supprimerFilm, mettreAJourFilm } = useFilms();
   const [inspections, setInspections] = useState([]);
-  const [films, setFilms] = useState([]);
   const [activeMenu, setActiveMenu] = useState('statistiques');
   const [newFilm, setNewFilm] = useState({ title: '', description: '', director: '', producer: '', image: null });
   const [searchTerm, setSearchTerm] = useState('');
@@ -15,24 +15,15 @@ export default function DashboardInspection({ user, onLogout }) {
 
   useEffect(() => {
     fetchInspections();
-    fetchFilms();
   }, []);
 
   const fetchInspections = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/inspections');
-      setInspections(response.data);
+      const response = await fetch('http://localhost:5000/api/inspections');
+      const data = await response.json();
+      setInspections(data);
     } catch (error) {
       console.error('Erreur lors de la récupération des inspections:', error);
-    }
-  };
-
-  const fetchFilms = async () => {
-    try {
-      const response = await axios.get('http://localhost:5000/api/films');
-      setFilms(response.data);
-    } catch (error) {
-      console.error('Erreur lors de la récupération des films:', error);
     }
   };
 
@@ -40,14 +31,13 @@ export default function DashboardInspection({ user, onLogout }) {
     e.preventDefault();
     try {
       const formData = new FormData();
-      for (const key in newFilm) {
-        formData.append(key, newFilm[key]);
+      for (const [key, value] of Object.entries(newFilm)) {
+        if (value !== null) {
+          formData.append(key, value);
+        }
       }
-      await axios.post('http://localhost:5000/api/films', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      await ajouterFilm(formData);
       setNewFilm({ title: '', description: '', director: '', producer: '', image: null });
-      fetchFilms();
     } catch (error) {
       console.error('Erreur lors de l\'ajout du film:', error);
     }
@@ -55,16 +45,16 @@ export default function DashboardInspection({ user, onLogout }) {
 
   const handleEditFilm = async (e) => {
     e.preventDefault();
+    if (!editingFilm) return;
     try {
       const formData = new FormData();
-      for (const key in editingFilm) {
-        formData.append(key, editingFilm[key]);
+      for (const [key, value] of Object.entries(editingFilm)) {
+        if (value !== null) {
+          formData.append(key, value);
+        }
       }
-      await axios.put(`http://localhost:5000/api/films/${editingFilm._id}`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      await mettreAJourFilm(editingFilm._id, formData);
       setEditingFilm(null);
-      fetchFilms();
     } catch (error) {
       console.error('Erreur lors de la mise à jour du film:', error);
     }
@@ -72,8 +62,7 @@ export default function DashboardInspection({ user, onLogout }) {
 
   const handleDeleteFilm = async (filmId) => {
     try {
-      await axios.delete(`http://localhost:5000/api/films/${filmId}`);
-      fetchFilms();
+      await supprimerFilm(filmId);
     } catch (error) {
       console.error('Erreur lors de la suppression du film:', error);
     }
@@ -221,7 +210,7 @@ export default function DashboardInspection({ user, onLogout }) {
         <div className="p-6">
           <h2 className="text-2xl font-semibold mb-6 text-center">ESPACE INSPECTION</h2>
           <div className="mb-6">
-            <img src={user.photo || Inspec} alt={user.name} className="w-32 h-32 rounded-full mx-auto mb-4" />
+            <img src={user.photo || Inspec}   alt={user.name} className="w-32 h-32 rounded-full mx-auto mb-4" />
             <h3 className="text-xl font-medium text-center">{user.name}</h3>
           </div>
           <nav className="space-y-2">
@@ -291,7 +280,7 @@ export default function DashboardInspection({ user, onLogout }) {
                   />
                 </div>
                 <div>
-                  <label htmlFor="edit-description" className="block text-sm font-medium  text-gray-700">Description</label>
+                  <label htmlFor="edit-description" className="block text-sm font-medium text-gray-700">Description</label>
                   <textarea
                     id="edit-description"
                     value={editingFilm.description}

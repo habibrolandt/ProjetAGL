@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { FilmProvider } from '../src/contexts/FilmContext';
 import BarreNavigation from './components/BarreNavigation';
 import Accueil from './pages/Accueil';
 import Films from './pages/Films';
@@ -38,83 +39,85 @@ function App() {
   };
 
   return (
-    <Router>
-      <div className="flex flex-col min-h-screen">
-        <BarreNavigation 
-          openModal={openModal} 
-          user={user} 
-          onLogout={handleLogout}
-        />
-        <main className="flex-grow">
-          <Routes>
-            <Route path="/" element={<Accueil />} />
-            <Route path="/films" element={<Films />} />
-            <Route path="/aide" element={<Aide />} />
-            <Route 
-              path="/planning" 
-              element={user ? <Planning /> : <UnauthorizedAccess openModal={openModal} />} 
-            />
-            <Route 
-              path="/dashboard" 
-              element={
-                user ? (
-                  user.role === 'admin' ? (
-                    <Navigate to="/admin-dashboard" />
-                  ) : user.role === 'respoInspection' ? (
-                    <Navigate to="/inspection-dashboard" />
-                  ) : user.role === 'respoProduction' ? (
-                    <Navigate to="/production-dashboard" />
+    <FilmProvider>
+      <Router>
+        <div className="flex flex-col min-h-screen">
+          <BarreNavigation 
+            openModal={openModal} 
+            user={user} 
+            onLogout={handleLogout}
+          />
+          <main className="flex-grow">
+            <Routes>
+              <Route path="/" element={<Accueil />} />
+              <Route path="/films" element={<Films />} />
+              <Route path="/aide" element={<Aide />} />
+              <Route 
+                path="/planning" 
+                element={user ? <Planning /> : <UnauthorizedAccess openModal={openModal} />} 
+              />
+              <Route 
+                path="/dashboard" 
+                element={
+                  user ? (
+                    user.role === 'admin' ? (
+                      <Navigate to="/admin-dashboard" />
+                    ) : user.role === 'respoInspection' ? (
+                      <Navigate to="/inspection-dashboard" />
+                    ) : user.role === 'respoProduction' ? (
+                      <Navigate to="/production-dashboard" />
+                    ) : (
+                      <Accueil user={user} />
+                    )
                   ) : (
-                    <Accueil user={user} />
+                    <Navigate to="/" />
                   )
-                ) : (
-                  <Navigate to="/" />
-                )
-              } 
-            />
-            <Route
-              path="/admin-dashboard"
-              element={
-                user && user.role === 'admin' ? (
-                  <DashboardAdmin user={user} onLogout={handleLogout} />
-                ) : (
-                  <Navigate to="/" />
-                )
-              }
-            />
-            <Route
-              path="/inspection-dashboard"
-              element={
-                user && user.role === 'respoInspection' ? (
-                  <DashboardInspection user={user} onLogout={handleLogout} />
-                ) : (
-                  <Navigate to="/" />
-                )
-              }
-            />
-            <Route
-              path="/production-dashboard"
-              element={
-                user && user.role === 'respoProduction' ? (
-                  <DashboardProduction user={user} onLogout={handleLogout} />
-                ) : (
-                  <Navigate to="/" />
-                )
-              }
-            />
-          </Routes>
-        </main>
-        {modalContent && (
-          <Modal closeModal={closeModal}>
-            {modalContent === 'connexion' ? (
-              <Connexion closeModal={closeModal} openModal={openModal} setUser={setUser} />
-            ) : (
-              <Inscription closeModal={closeModal} openModal={openModal} />
-            )}
-          </Modal>
-        )}
-      </div>
-    </Router>
+                } 
+              />
+              <Route
+                path="/admin-dashboard"
+                element={
+                  user && user.role === 'admin' ? (
+                    <DashboardAdmin user={user} onLogout={handleLogout} />
+                  ) : (
+                    <Navigate to="/" />
+                  )
+                }
+              />
+              <Route
+                path="/inspection-dashboard"
+                element={
+                  user && user.role === 'respoInspection' ? (
+                    <DashboardInspection user={user} onLogout={handleLogout} />
+                  ) : (
+                    <Navigate to="/" />
+                  )
+                }
+              />
+              <Route
+                path="/production-dashboard"
+                element={
+                  user && user.role === 'respoProduction' ? (
+                    <DashboardProduction user={user} onLogout={handleLogout} />
+                  ) : (
+                    <Navigate to="/" />
+                  )
+                }
+              />
+            </Routes>
+          </main>
+          {modalContent && (
+            <Modal closeModal={closeModal}>
+              {modalContent === 'connexion' ? (
+                <Connexion closeModal={closeModal} openModal={openModal} setUser={setUser} />
+              ) : (
+                <Inscription closeModal={closeModal} openModal={openModal} />
+              )}
+            </Modal>
+          )}
+        </div>
+      </Router>
+    </FilmProvider>
   );
 }
 
