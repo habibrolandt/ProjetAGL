@@ -49,7 +49,7 @@ export default function DashboardProduction({ user, onLogout }) {
 
   const fetchPlannings = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/plannings');
+      const response = await axios.get('http://192.168.84.154:5000/api/plannings');
       setPlannings(response.data);
     } catch (error) {
       console.error('Erreur lors de la récupération des plannings:', error);
@@ -77,10 +77,10 @@ export default function DashboardProduction({ user, onLogout }) {
         date: new Date(planningForm.date).toISOString(),
       };
       if (editMode) {
-        await axios.put(`http://localhost:5000/api/plannings/${planningForm.id}`, formData);
+        await axios.put(`http://192.168.84.154:5000/api/plannings/${planningForm.id}`, formData);
         alert('Planning modifié avec succès!');
       } else {
-        await axios.post('http://localhost:5000/api/plannings', formData);
+        await axios.post('http://192.168.84.154:5000/api/plannings', formData);
         alert('Planning enregistré avec succès!');
       }
       setPlanningForm({ id: null, film: '', salle: '', date: '', heure: '' });
@@ -104,7 +104,7 @@ export default function DashboardProduction({ user, onLogout }) {
   const handleDelete = async (id) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce planning ?')) {
       try {
-        await axios.delete(`http://localhost:5000/api/plannings/${id}`);
+        await axios.delete(`http://192.168.84.154:5000/api/plannings/${id}`);
         alert('Planning supprimé avec succès!');
         fetchPlannings();
         fetchStats();

@@ -19,7 +19,7 @@ export default function DashboardInspection({ user, onLogout }) {
 
   const fetchInspections = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/inspections');
+      const response = await fetch('http://192.168.84.154:5000/api/inspections');
       const data = await response.json();
       setInspections(data);
     } catch (error) {

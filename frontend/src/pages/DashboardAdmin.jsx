@@ -18,7 +18,7 @@ export default function DashboardAdmin({ user, onLogout }) {
 
   const fetchUsers = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/users');
+      const response = await axios.get('http://192.168.84.154:5000/api/users');
       setUsers(response.data);
     } catch (error) {
       console.error('Erreur lors de la récupération des utilisateurs:', error);
@@ -28,7 +28,7 @@ export default function DashboardAdmin({ user, onLogout }) {
   const handleAddUser = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('http://localhost:5000/api/users', newUser);
+      await axios.post('http://192.168.84.154:5000/api/users', newUser);
       setNewUser({ name: '', email: '', password: '' });
       setShowAddUserForm(false);
       fetchUsers();
@@ -40,7 +40,7 @@ export default function DashboardAdmin({ user, onLogout }) {
   const handleEditUser = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`http://localhost:5000/api/users/${editingUser._id}`, editingUser);
+      await axios.put(`http://192.168.84.154:5000/api/users/${editingUser._id}`, editingUser);
       setEditingUser(null);
       fetchUsers();
     } catch (error) {
@@ -50,7 +50,7 @@ export default function DashboardAdmin({ user, onLogout }) {
 
   const handleDeleteUser = async (userId) => {
     try {
-      await axios.delete(`http://localhost:5000/api/users/${userId}`);
+      await axios.delete(`http://192.168.84.154:5000/api/users/${userId}`);
       fetchUsers();
     } catch (error) {
       console.error('Erreur lors de la suppression de l\'utilisateur:', error);
@@ -59,7 +59,7 @@ export default function DashboardAdmin({ user, onLogout }) {
 
   const handleChangeRole = async (userId, newRole) => {
     try {
-      await axios.put(`http://localhost:5000/api/users/${userId}/role`, { role: newRole });
+      await axios.put(`http://192.168.84.154:5000/api/users/${userId}/role`, { role: newRole });
       fetchUsers();
     } catch (error) {
       console.error('Erreur lors du changement de rôle:', error);
