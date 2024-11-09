@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Home, LogOut, BarChart2, Calendar, ArrowLeft, Users, Film, Clock, Edit, Trash2 } from 'lucide-react';
 import axios from 'axios';
-import  biagne from '../../src/assets/Ressources/Prod.jpg';
+import biagne from '../../src/assets/Ressources/Prod.jpg';
 
-const allFilms = [
+const tousLesFilms = [
   { id: 1, titre: "Film Joker" },
   { id: 2, titre: "Films" },
   { id: 3, titre: "Films Cargo" },
@@ -21,10 +21,12 @@ const allFilms = [
 
 const salles = ["Salle 1", "Salle 2", "Salle 3", "Salle 4", "Salle 5"];
 
+const URL_BASE_API = 'http://localhost:5000';
+
 export default function DashboardProduction({ user, onLogout }) {
   const navigate = useNavigate();
-  const [activeMenu, setActiveMenu] = useState('statistiques');
-  const [planningForm, setPlanningForm] = useState({
+  const [menuActif, setMenuActif] = useState('statistiques');
+  const [formulairePlanning, setFormulairePlanning] = useState({
     id: null,
     film: '',
     salle: '',
@@ -38,95 +40,118 @@ export default function DashboardProduction({ user, onLogout }) {
     spectateursAujourdhui: 0,
     filmLePlusPopulaire: '',
   });
-  const [editMode, setEditMode] = useState(false);
+  const [modeEdition, setModeEdition] = useState(false);
+  const [chargement, setChargement] = useState(false);
+  const [erreur, setErreur] = useState(null);
 
   useEffect(() => {
-    fetchPlannings();
-    fetchStats();
-    const interval = setInterval(fetchStats, 60000); // Mise à jour toutes les minutes
-    return () => clearInterval(interval);
+    recupererPlannings();
+    recupererStats();
+    const intervalle = setInterval(recupererStats, 60000); // Mise à jour toutes les minutes
+    return () => clearInterval(intervalle);
   }, []);
 
-  const fetchPlannings = async () => {
+  const recupererPlannings = async () => {
+    setChargement(true);
+    setErreur(null);
     try {
-      const response = await axios.get('http://192.168.84.154:5000/api/plannings');
-      setPlannings(response.data);
-    } catch (error) {
-      console.error('Erreur lors de la récupération des plannings:', error);
+      const reponse = await axios.get(`${URL_BASE_API}/api/plannings`);
+      setPlannings(reponse.data);
+    } catch (erreur) {
+      console.error('Erreur lors de la récupération des plannings:', erreur);
+      setErreur('Impossible de récupérer les plannings. Veuillez réessayer plus tard.');
+    } finally {
+      setChargement(false);
     }
   };
 
-  const fetchStats = async () => {
+  const recupererStats = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/stats');
-      setStats(response.data);
-    } catch (error) {
-      console.error('Erreur lors de la récupération des statistiques:', error);
+      const reponse = await axios.get(`${URL_BASE_API}/api/stats`);
+      setStats(reponse.data);
+    } catch (erreur) {
+      console.error('Erreur lors de la récupération des statistiques:', erreur);
     }
   };
 
-  const handlePlanningChange = (e) => {
-    setPlanningForm({ ...planningForm, [e.target.name]: e.target.value });
+  const gererChangementPlanning = (e) => {
+    setFormulairePlanning({ ...formulairePlanning, [e.target.name]: e.target.value });
   };
 
-  const handlePlanningSubmit = async (e) => {
+  const gererSoumissionPlanning = async (e) => {
     e.preventDefault();
+    setChargement(true);
+    setErreur(null);
     try {
-      const formData = {
-        ...planningForm,
-        date: new Date(planningForm.date).toISOString(),
+      const donnees = {
+        ...formulairePlanning,
+        date: new Date(formulairePlanning.date).toISOString(),
       };
-      if (editMode) {
-        await axios.put(`http://192.168.84.154:5000/api/plannings/${planningForm.id}`, formData);
+      if (modeEdition) {
+        await axios.put(`${URL_BASE_API}/api/plannings/${formulairePlanning.id}`, donnees);
         alert('Planning modifié avec succès!');
       } else {
-        await axios.post('http://192.168.84.154:5000/api/plannings', formData);
+        await axios.post(`${URL_BASE_API}/api/plannings`, donnees);
         alert('Planning enregistré avec succès!');
       }
-      setPlanningForm({ id: null, film: '', salle: '', date: '', heure: '' });
-      setEditMode(false);
-      fetchPlannings();
-      fetchStats();
-    } catch (error) {
-      console.error('Erreur lors de l\'enregistrement/modification du planning:', error);
-      alert('Erreur lors de l\'enregistrement/modification du planning');
+      setFormulairePlanning({ id: null, film: '', salle: '', date: '', heure: '' });
+      setModeEdition(false);
+      recupererPlannings();
+      recupererStats();
+    } catch (erreur) {
+      console.error('Erreur lors de l\'enregistrement/modification du planning:', erreur);
+      setErreur('Erreur lors de l\'enregistrement/modification du planning. Veuillez réessayer.');
+    } finally {
+      setChargement(false);
     }
   };
 
-  const handleEdit = (planning) => {
-    setPlanningForm({
+  const gererEdition = (planning) => {
+    setFormulairePlanning({
       ...planning,
       date: new Date(planning.date).toISOString().split('T')[0],
     });
-    setEditMode(true);
+    setModeEdition(true);
   };
 
-  const handleDelete = async (id) => {
+  const gererSuppression = async (id) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce planning ?')) {
+      setChargement(true);
+      setErreur(null);
       try {
-        await axios.delete(`http://192.168.84.154:5000/api/plannings/${id}`);
+        await axios.delete(`${URL_BASE_API}/api/plannings/${id}`);
         alert('Planning supprimé avec succès!');
-        fetchPlannings();
-        fetchStats();
-      } catch (error) {
-        console.error('Erreur lors de la suppression du planning:', error);
-        alert('Erreur lors de la suppression du planning');
+        recupererPlannings();
+        recupererStats();
+      } catch (erreur) {
+        console.error('Erreur lors de la suppression du planning:', erreur);
+        setErreur('Erreur lors de la suppression du planning. Veuillez réessayer.');
+      } finally {
+        setChargement(false);
       }
     }
   };
 
-  const handleCancelEdit = () => {
-    setPlanningForm({ id: null, film: '', salle: '', date: '', heure: '' });
-    setEditMode(false);
+  const annulerEdition = () => {
+    setFormulairePlanning({ id: null, film: '', salle: '', date: '', heure: '' });
+    setModeEdition(false);
   };
 
-  const getAvailableFilms = () => {
-    const plannedFilms = plannings.map(p => p.film);
-    return allFilms.filter(film => !plannedFilms.includes(film.titre));
+  const obtenirFilmsDisponibles = () => {
+    const filmsPlanifies = plannings.map(p => p.film);
+    return tousLesFilms.filter(film => !filmsPlanifies.includes(film.titre));
   };
 
-  const renderContent = () => {
-    switch (activeMenu) {
+  const rendreContenu = () => {
+    if (chargement) {
+      return <div className="text-center">Chargement...</div>;
+    }
+
+    if (erreur) {
+      return <div className="text-center text-red-600">{erreur}</div>;
+    }
+
+    switch (menuActif) {
       case 'statistiques':
         return (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -164,21 +189,21 @@ export default function DashboardProduction({ user, onLogout }) {
         return (
           <div className="bg-white p-6 rounded-lg shadow-md">
             <h2 className="text-2xl font-semibold mb-6">
-              {editMode ? 'Modifier un planning' : 'Établir un planning'}
+              {modeEdition ? 'Modifier un planning' : 'Établir un planning'}
             </h2>
-            <form onSubmit={handlePlanningSubmit} className="space-y-4">
+            <form onSubmit={gererSoumissionPlanning} className="space-y-4">
               <div>
                 <label htmlFor="film" className="block text-sm font-medium text-gray-700">Film</label>
                 <select
                   id="film"
                   name="film"
-                  value={planningForm.film}
-                  onChange={handlePlanningChange}
+                  value={formulairePlanning.film}
+                  onChange={gererChangementPlanning}
                   className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm rounded-md"
                   required
                 >
                   <option value="">Sélectionnez un film</option>
-                  {(editMode ? allFilms : getAvailableFilms()).map((film) => (
+                  {(modeEdition ? tousLesFilms : obtenirFilmsDisponibles()).map((film) => (
                     <option key={film.id} value={film.titre}>{film.titre}</option>
                   ))}
                 </select>
@@ -188,8 +213,8 @@ export default function DashboardProduction({ user, onLogout }) {
                 <select
                   id="salle"
                   name="salle"
-                  value={planningForm.salle}
-                  onChange={handlePlanningChange}
+                  value={formulairePlanning.salle}
+                  onChange={gererChangementPlanning}
                   className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm rounded-md"
                   required
                 >
@@ -205,8 +230,8 @@ export default function DashboardProduction({ user, onLogout }) {
                   type="date"
                   id="date"
                   name="date"
-                  value={planningForm.date}
-                  onChange={handlePlanningChange}
+                  value={formulairePlanning.date}
+                  onChange={gererChangementPlanning}
                   min={new Date().toISOString().split('T')[0]}
                   className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm rounded-md"
                   required
@@ -218,8 +243,8 @@ export default function DashboardProduction({ user, onLogout }) {
                   type="time"
                   id="heure"
                   name="heure"
-                  value={planningForm.heure}
-                  onChange={handlePlanningChange}
+                  value={formulairePlanning.heure}
+                  onChange={gererChangementPlanning}
                   className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm rounded-md"
                   required
                 />
@@ -228,13 +253,14 @@ export default function DashboardProduction({ user, onLogout }) {
                 <button
                   type="submit"
                   className="flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+                  disabled={chargement}
                 >
-                  {editMode ? 'Modifier le planning' : 'Enregistrer le planning'}
+                  {modeEdition ? 'Modifier le planning' : 'Enregistrer le planning'}
                 </button>
-                {editMode && (
+                {modeEdition && (
                   <button
                     type="button"
-                    onClick={handleCancelEdit}
+                    onClick={annulerEdition}
                     className="flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
                   >
                     Annuler la modification
@@ -264,13 +290,14 @@ export default function DashboardProduction({ user, onLogout }) {
                         <td className="px-6 py-4 whitespace-nowrap">{planning.heure}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <button
-                            onClick={() => handleEdit(planning)}
+                            onClick={() => gererEdition(planning)}
                             className="text-orange-600 hover:text-orange-900 mr-2"
                           >
                             <Edit size={18} />
                           </button>
+
                           <button
-                            onClick={() => handleDelete(planning._id)}
+                            onClick={() => gererSuppression(planning._id)}
                             className="text-red-600 hover:text-red-900"
                           >
                             <Trash2 size={18} />
@@ -291,7 +318,7 @@ export default function DashboardProduction({ user, onLogout }) {
 
   return (
     <div className="flex h-screen bg-gray-100">
-      {/* Sidebar */}
+      {/* Barre latérale */}
       <div className="w-64 bg-orange-600 text-white">
         <div className="p-6">
           <h2 className="text-2xl font-semibold mb-6 text-center">ESPACE PRODUCTION</h2>
@@ -300,30 +327,29 @@ export default function DashboardProduction({ user, onLogout }) {
             <h3 className="text-xl font-medium text-center">{user.name}</h3>
           </div>
           <nav className="space-y-2">
-            <button 
-              onClick={() => setActiveMenu('statistiques')} 
-              className={`w-full text-left py-2 px-4 rounded transition-colors duration-200 flex items-center ${activeMenu === 'statistiques' ? 'bg-orange-700' : 'hover:bg-orange-700'}`}
+            <button
+              onClick={() => setMenuActif('statistiques')}
+              className={`w-full text-left py-2 px-4 rounded transition-colors duration-200 flex items-center ${menuActif === 'statistiques' ? 'bg-orange-700' : 'hover:bg-orange-700'}`}
             >
-              
               <BarChart2 className="mr-2" size={18} />
               Statistiques
             </button>
-            <button 
-              onClick={() => setActiveMenu('etablirPlanning')} 
-              className={`w-full text-left py-2 px-4 rounded transition-colors duration-200 flex items-center ${activeMenu === 'etablirPlanning' ? 'bg-orange-700' : 'hover:bg-orange-700'}`}
+            <button
+              onClick={() => setMenuActif('etablirPlanning')}
+              className={`w-full text-left py-2 px-4 rounded transition-colors duration-200 flex items-center ${menuActif === 'etablirPlanning' ? 'bg-orange-700' : 'hover:bg-orange-700'}`}
             >
               <Calendar className="mr-2" size={18} />
               Etablir Planning
             </button>
-            <button 
-              onClick={() => navigate('/')} 
+            <button
+              onClick={() => navigate('/')}
               className="w-full text-left py-2 px-4 rounded hover:bg-orange-700 transition-colors duration-200 flex items-center"
             >
               <ArrowLeft className="mr-2" size={18} />
               Retour au menu Accueil
             </button>
-            <button 
-              onClick={onLogout} 
+            <button
+              onClick={onLogout}
               className="w-full text-left py-2 px-4 rounded hover:bg-orange-700 transition-colors duration-200 flex items-center"
             >
               <LogOut className="mr-2" size={18} />
@@ -333,7 +359,7 @@ export default function DashboardProduction({ user, onLogout }) {
         </div>
       </div>
 
-      {/* Main content */}
+      {/* Contenu principal */}
       <div className="flex-1 p-10 bg-orange-50 overflow-auto">
         <div className="bg-orange-600 text-white p-6 rounded-lg shadow-md mb-6">
           <h1 className="text-2xl font-bold text-center">
@@ -341,7 +367,7 @@ export default function DashboardProduction({ user, onLogout }) {
           </h1>
         </div>
 
-        {renderContent()}
+        {rendreContenu()}
       </div>
     </div>
   );

@@ -17,7 +17,7 @@ export default function Connexion({ closeModal, setUser }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://192.168.84.154:5000/api/users/connexion', formData);
+      const response = await axios.post('http://localhost:5000/api/utilisateurs/connexion', formData);
       console.log('Réponse du serveur:', response.data);
       setMessage({ type: 'success', content: 'Connexion réussie' });
       const userData = response.data.user;

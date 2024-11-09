@@ -16,7 +16,7 @@ export default function Inscription({ closeModal, openModal }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://192.168.84.154:5000/api/users/inscription', formData);
+      const response = await axios.post('http://localhost:5000/api/utilisateurs/inscription', formData);
       setMessage({ type: 'success', content: response.data.message });
       setTimeout(() => {
         closeModal();

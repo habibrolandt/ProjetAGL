@@ -14,7 +14,6 @@ const FilmRoutes = require('./routes/FilmRoutes');
 const planningRoutes = require('./routes/planningRoutes');
 const statsRoutes = require('./routes/statsRoutes');
 
-
 const app = express();
 
 // Connexion à la base de données
@@ -22,14 +21,14 @@ connectDB();
 
 // Middleware
 app.use(cors({
-    origin: '*',
+    origin: ['http://localhost:3000', 'http://localhost:5000', 'http://localhost:5173' ],
     credentials: true
 }));
 app.use(express.json());
 app.use(session(sessionConfig));
 
 // Routes
-app.use('/api/users', UtilisateursRoutes);
+app.use('/api/utilisateurs', UtilisateursRoutes); 
 app.use('/api/messages', messageRoutes);
 app.use('/api/respos', InspRoutes);
 app.use('/api/Prod', ProdRoutes);
@@ -42,4 +41,4 @@ app.use('/api/stats', statsRoutes);
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, '0.0.0.0', () => console.log(`Serveur en cours d'exécution sur le port ${PORT}`));
+app.listen(PORT, () => console.log(`Serveur en cours d'exécution sur le port ${PORT}`));

@@ -4,72 +4,71 @@ import { Home, UserPlus, Edit, Trash2, LogOut, BarChart2, Film, Users, Calendar 
 import axios from 'axios';
 import admin from '../../src/assets/Ressources/admin.jpg';
 
-export default function DashboardAdmin({ user, onLogout }) {
+export default function DashboardAdmin({ utilisateur, onDeconnexion }) {
   const navigate = useNavigate();
-  const [users, setUsers] = useState([]);
-  const [showAddUserForm, setShowAddUserForm] = useState(false);
-  const [newUser, setNewUser] = useState({ name: '', email: '', password: '' });
-  const [editingUser, setEditingUser] = useState(null);
-  const [activeMenu, setActiveMenu] = useState('statistiques');
+  const [utilisateurs, setUtilisateurs] = useState([]);
+  const [afficherFormulaireAjoutUtilisateur, setAfficherFormulaireAjoutUtilisateur] = useState(false);
+  const [nouvelUtilisateur, setNouvelUtilisateur] = useState({ nom: '', email: '', motDePasse: '' });
+  const [utilisateurEnEdition, setUtilisateurEnEdition] = useState(null);
+  const [menuActif, setMenuActif] = useState('statistiques');
 
   useEffect(() => {
-    fetchUsers();
+    recupererUtilisateurs();
   }, []);
 
-  const fetchUsers = async () => {
+  const recupererUtilisateurs = async () => {
     try {
-      const response = await axios.get('http://192.168.84.154:5000/api/users');
-      setUsers(response.data);
-    } catch (error) {
-      console.error('Erreur lors de la récupération des utilisateurs:', error);
+      const reponse = await axios.get('http://localhost:5000/api/utilisateurs');
+      setUtilisateurs(reponse.data);
+    } catch (erreur) {
+      console.error('Erreur lors de la récupération des utilisateurs:', erreur);
     }
   };
 
-  const handleAddUser = async (e) => {
+  const gererAjoutUtilisateur = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('http://192.168.84.154:5000/api/users', newUser);
-      setNewUser({ name: '', email: '', password: '' });
-      setShowAddUserForm(false);
-      fetchUsers();
-    } catch (error) {
-      console.error('Erreur lors de l\'ajout de l\'utilisateur:', error);
+      await axios.post('http://localhost:5000/api/utilisateurs', nouvelUtilisateur);
+      setNouvelUtilisateur({ nom: '', email: '', motDePasse: '' });
+      setAfficherFormulaireAjoutUtilisateur(false);
+      recupererUtilisateurs();
+    } catch (erreur) {
+      console.error('Erreur lors de l\'ajout de l\'utilisateur:', erreur);
     }
   };
 
-  const handleEditUser = async (e) => {
+  const gererEditionUtilisateur = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`http://192.168.84.154:5000/api/users/${editingUser._id}`, editingUser);
-      setEditingUser(null);
-      fetchUsers();
-    } catch (error) {
-      console.error('Erreur lors de la mise à jour de l\'utilisateur:', error);
+      await axios.put(`http://localhost:5000/api/utilisateurs/${utilisateurEnEdition._id}`, utilisateurEnEdition);
+      setUtilisateurEnEdition(null);
+      recupererUtilisateurs();
+    } catch (erreur) {
+      console.error('Erreur lors de la mise à jour de l\'utilisateur:', erreur);
     }
   };
 
-  const handleDeleteUser = async (userId) => {
+  const gererSuppressionUtilisateur = async (utilisateurId) => {
     try {
-      await axios.delete(`http://192.168.84.154:5000/api/users/${userId}`);
-      fetchUsers();
-    } catch (error) {
-      console.error('Erreur lors de la suppression de l\'utilisateur:', error);
+      await axios.delete(`http://localhost:5000/api/utilisateurs/${utilisateurId}`);
+      recupererUtilisateurs();
+    } catch (erreur) {
+      console.error('Erreur lors de la suppression de l\'utilisateur:', erreur);
     }
   };
 
-  const handleChangeRole = async (userId, newRole) => {
+  const gererChangementRole = async (utilisateurId, nouveauRole) => {
     try {
-      await axios.put(`http://192.168.84.154:5000/api/users/${userId}/role`, { role: newRole });
-      fetchUsers();
-    } catch (error) {
-      console.error('Erreur lors du changement de rôle:', error);
+      await axios.put(`http://localhost:5000/api/utilisateurs/${utilisateurId}/role`, { role: nouveauRole });
+      recupererUtilisateurs();
+    } catch (erreur) {
+      console.error('Erreur lors du changement de rôle:', erreur);
     }
   };
 
-  const renderContent = () => {
-    switch (activeMenu) {
+  const rendreContenu = () => {
+    switch (menuActif) {
       case 'statistiques':
-        // ... (garder le code existant pour les statistiques)
         return (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <div className="card">
@@ -78,7 +77,7 @@ export default function DashboardAdmin({ user, onLogout }) {
                 <Users className="h-4 w-4 text-muted-foreground" />
               </div>
               <div className="card-content">
-                <div className="text-2xl font-bold">{users.length}</div>
+                <div className="text-2xl font-bold">{utilisateurs.length}</div>
                 <p className="text-xs text-muted-foreground">+20% par rapport au mois dernier</p>
               </div>
             </div>
@@ -114,38 +113,38 @@ export default function DashboardAdmin({ user, onLogout }) {
             </div>
           </div>
         );
-      case 'ajouterUser':
+      case 'ajouterUtilisateur':
         return (
-          <form onSubmit={handleAddUser} className="bg-white p-6 rounded-lg shadow-md">
+          <form onSubmit={gererAjoutUtilisateur} className="bg-white p-6 rounded-lg shadow-md">
             <h2 className="text-xl font-semibold mb-4">Ajouter un nouvel utilisateur</h2>
             <input
               type="text"
               placeholder="Nom"
-              value={newUser.name}
-              onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
+              value={nouvelUtilisateur.nom}
+              onChange={(e) => setNouvelUtilisateur({ ...nouvelUtilisateur, nom: e.target.value })}
               className="w-full p-2 mb-4 border rounded"
               required
             />
             <input
               type="email"
               placeholder="Email"
-              value={newUser.email}
-              onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+              value={nouvelUtilisateur.email}
+              onChange={(e) => setNouvelUtilisateur({ ...nouvelUtilisateur, email: e.target.value })}
               className="w-full p-2 mb-4 border rounded"
               required
             />
             <input
               type="password"
               placeholder="Mot de passe"
-              value={newUser.password}
-              onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+              value={nouvelUtilisateur.motDePasse}
+              onChange={(e) => setNouvelUtilisateur({ ...nouvelUtilisateur, motDePasse: e.target.value })}
               className="w-full p-2 mb-4 border rounded"
               required
             />
             <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Ajouter</button>
           </form>
         );
-      case 'listeUsers':
+      case 'listeUtilisateurs':
         return (
           <div className="bg-white p-6 rounded-lg shadow-md">
             <h2 className="text-xl font-semibold mb-4">Liste des utilisateurs</h2>
@@ -159,21 +158,21 @@ export default function DashboardAdmin({ user, onLogout }) {
                 </tr>
               </thead>
               <tbody>
-                {users.map((user) => (
-                  <tr key={user._id}>
-                    <td>{user.name}</td>
-                    <td>{user.email}</td>
-                    <td>{user.role}</td>
+                {utilisateurs.map((utilisateur) => (
+                  <tr key={utilisateur._id}>
+                    <td>{utilisateur.nom}</td>
+                    <td>{utilisateur.email}</td>
+                    <td>{utilisateur.role}</td>
                     <td>
-                      <button onClick={() => setEditingUser(user)} className="text-blue-500 mr-2">
+                      <button onClick={() => setUtilisateurEnEdition(utilisateur)} className="text-blue-500 mr-2">
                         <Edit size={18} />
                       </button>
-                      <button onClick={() => handleDeleteUser(user._id)} className="text-red-500 mr-2">
+                      <button onClick={() => gererSuppressionUtilisateur(utilisateur._id)} className="text-red-500 mr-2">
                         <Trash2 size={18} />
                       </button>
                       <select
-                        value={user.role}
-                        onChange={(e) => handleChangeRole(user._id, e.target.value)}
+                        value={utilisateur.role}
+                        onChange={(e) => gererChangementRole(utilisateur._id, e.target.value)}
                         className="border rounded px-2 py-1"
                       >
                         <option value="utilisateur">Utilisateur</option>
@@ -194,35 +193,39 @@ export default function DashboardAdmin({ user, onLogout }) {
 
   return (
     <div className="flex h-screen bg-gray-100">
-      {/* Sidebar */}
+      {/* Barre latérale */}
       <div className="w-64 bg-blue-600 text-white">
         <div className="p-6">
           <h2 className="text-2xl font-semibold mb-6 text-center">ESPACE ADMIN</h2>
           <div className="mb-6">
-            <img src={user.photo || admin} alt={user.name} className="w-32 h-32 rounded-full mx-auto mb-4" />
-            <h3 className="text-xl font-medium text-center">{user.name}</h3>
+            <img 
+              src={utilisateur?.photo || admin} 
+              alt={utilisateur?.nom || 'Admin'} 
+              className="w-32 h-32 rounded-full mx-auto mb-4" 
+            />
+            <h3 className="text-xl font-medium text-center">{utilisateur?.nom || 'Admin'}</h3>
           </div>
           <nav>
             <button 
-              onClick={() => setActiveMenu('statistiques')} 
-              className={`w-full text-left py-2 px-4 rounded transition-colors duration-200 flex items-center ${activeMenu === 'statistiques' ? 'bg-blue-700' : 'hover:bg-blue-700'}`}
+              onClick={() => setMenuActif('statistiques')} 
+              className={`w-full text-left py-2 px-4 rounded transition-colors duration-200 flex items-center ${menuActif === 'statistiques' ? 'bg-blue-700' : 'hover:bg-blue-700'}`}
             >
               <BarChart2 className="mr-2" size={18} />
               Statistiques
             </button>
             <button 
-              onClick={() => setActiveMenu('ajouterUser')} 
-              className={`w-full text-left py-2 px-4 rounded transition-colors duration-200 flex items-center ${activeMenu === 'ajouterUser' ? 'bg-blue-700' : 'hover:bg-blue-700'}`}
+              onClick={() => setMenuActif('ajouterUtilisateur')} 
+              className={`w-full text-left py-2 px-4 rounded transition-colors duration-200 flex items-center ${menuActif === 'ajouterUtilisateur' ? 'bg-blue-700' : 'hover:bg-blue-700'}`}
             >
               <UserPlus className="mr-2" size={18} />
-              Ajouter un User
+              Ajouter un utilisateur
             </button>
             <button 
-              onClick={() => setActiveMenu('listeUsers')} 
-              className={`w-full text-left py-2 px-4 rounded transition-colors duration-200 flex items-center ${activeMenu === 'listeUsers' ? 'bg-blue-700' : 'hover:bg-blue-700'}`}
+              onClick={() => setMenuActif('listeUtilisateurs')} 
+              className={`w-full text-left py-2 px-4 rounded transition-colors duration-200 flex items-center ${menuActif === 'listeUtilisateurs' ? 'bg-blue-700' : 'hover:bg-blue-700'}`}
             >
               <Users className="mr-2" size={18} />
-              Liste des Users
+              Liste des utilisateurs
             </button>
             <button 
               onClick={() => navigate('/')} 
@@ -232,7 +235,7 @@ export default function DashboardAdmin({ user, onLogout }) {
               Retour au menu Accueil
             </button>
             <button 
-              onClick={onLogout} 
+              onClick={onDeconnexion} 
               className="w-full text-left py-2 px-4 rounded hover:bg-blue-700 transition-colors duration-200 flex items-center"
             >
               <LogOut className="mr-2" size={18} />
@@ -242,42 +245,42 @@ export default function DashboardAdmin({ user, onLogout }) {
         </div>
       </div>
 
-      {/* Main content */}
+      {/* Contenu principal */}
       <div className="flex-1 p-10 bg-blue-50 overflow-auto">
         <div className="bg-blue-600 text-white p-6 rounded-lg shadow-md mb-6">
           <h1 className="text-2xl font-bold text-center">
-            BIENVENUE {user.name.toUpperCase()} SUR VOTRE TABLEAU DE BORD !
+            BIENVENUE {utilisateur?.nom?.toUpperCase() || 'ADMIN'} SUR VOTRE TABLEAU DE BORD !
           </h1>
         </div>
 
-        {renderContent()}
+        {rendreContenu()}
 
-        {editingUser && (
+        {utilisateurEnEdition && (
           <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center">
-            <form onSubmit={handleEditUser} className="bg-white p-6 rounded-lg shadow-md">
+            <form onSubmit={gererEditionUtilisateur} className="bg-white p-6 rounded-lg shadow-md">
               <h2 className="text-xl font-semibold mb-4">Modifier l'utilisateur</h2>
               <input
                 type="text"
                 placeholder="Nom"
-                value={editingUser.name}
-                onChange={(e) => setEditingUser({ ...editingUser, name: e.target.value })}
+                value={utilisateurEnEdition.nom}
+                onChange={(e) => setUtilisateurEnEdition({ ...utilisateurEnEdition, nom: e.target.value })}
                 className="w-full p-2 mb-4 border rounded"
                 required
               />
               <input
                 type="email"
                 placeholder="Email"
-                value={editingUser.email}
-                onChange={(e) => setEditingUser({ ...editingUser, email: e.target.value })}
+                value={utilisateurEnEdition.email}
+                onChange={(e) => setUtilisateurEnEdition({ ...utilisateurEnEdition, email: e.target.value })}
                 className="w-full p-2 mb-4 border rounded"
                 required
               />
               <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Mettre à jour</button>
-              <button type="button" onClick={() => setEditingUser(null)} className="ml-2 bg-gray-300 px-4 py-2 rounded hover:bg-gray-400">Annuler</button>
+              <button type="button" onClick={() => setUtilisateurEnEdition(null)} className="ml-2 bg-gray-300 px-4 py-2 rounded hover:bg-gray-400">Annuler</button>
             </form>
           </div>
         )}
       </div>
     </div>
   );
-}
+} 

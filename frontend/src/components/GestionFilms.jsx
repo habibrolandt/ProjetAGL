@@ -12,7 +12,7 @@ export default function GestionFilms() {
 
   const fetchFilms = async () => {
     try {
-      const response = await axios.get('http://192.168.84.154:5000/api/films');
+      const response = await axios.get('http://localhost:5000/api/films');
       setFilms(response.data);
     } catch (error) {
       console.error('Erreur lors de la récupération des films:', error);
