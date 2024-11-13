@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Home, Edit, LogOut, BarChart2, Clipboard, CheckSquare, Calendar, Film, Plus, Search, Trash2 } from 'lucide-react';
+import { Home, Edit, LogOut, BarChart2, Film, Plus, Search, Trash2 } from 'lucide-react';
 import { useFilms } from '../contexts/FilmContext';
 import Inspec from '../assets/Ressources/Inspec.jpg';
 
@@ -20,6 +20,9 @@ export default function DashboardInspection({ user, onLogout }) {
   const fetchInspections = async () => {
     try {
       const response = await fetch('http://localhost:5000/api/respos');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       const data = await response.json();
       setInspections(data);
     } catch (error) {
@@ -36,7 +39,19 @@ export default function DashboardInspection({ user, onLogout }) {
           formData.append(key, value);
         }
       }
-      await ajouterFilm(formData);
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/films', {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const addedFilm = await response.json();
+      ajouterFilm(addedFilm);
       setNewFilm({ title: '', description: '', director: '', producer: '', image: null });
     } catch (error) {
       console.error('Erreur lors de l\'ajout du film:', error);
@@ -53,7 +68,19 @@ export default function DashboardInspection({ user, onLogout }) {
           formData.append(key, value);
         }
       }
-      await mettreAJourFilm(editingFilm._id, formData);
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5000/api/films/${editingFilm._id}`, {
+        method: 'PUT',
+        body: formData,
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const updatedFilm = await response.json();
+      mettreAJourFilm(editingFilm._id, updatedFilm);
       setEditingFilm(null);
     } catch (error) {
       console.error('Erreur lors de la mise à jour du film:', error);
@@ -62,7 +89,17 @@ export default function DashboardInspection({ user, onLogout }) {
 
   const handleDeleteFilm = async (filmId) => {
     try {
-      await supprimerFilm(filmId);
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5000/api/films/${filmId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      supprimerFilm(filmId);
     } catch (error) {
       console.error('Erreur lors de la suppression du film:', error);
     }
@@ -210,7 +247,7 @@ export default function DashboardInspection({ user, onLogout }) {
         <div className="p-6">
           <h2 className="text-2xl font-semibold mb-6 text-center">ESPACE INSPECTION</h2>
           <div className="mb-6">
-            <img src={user.photo || Inspec}   alt={user.name} className="w-32 h-32 rounded-full mx-auto mb-4" />
+            <img src={user.photo || Inspec} alt={user.name} className="w-32 h-32 rounded-full mx-auto mb-4" />
             <h3 className="text-xl font-medium text-center">{user.name}</h3>
           </div>
           <nav className="space-y-2">

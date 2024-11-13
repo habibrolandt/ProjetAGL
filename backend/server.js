@@ -21,14 +21,14 @@ connectDB();
 
 // Middleware
 app.use(cors({
-    origin: ['http://localhost:3000', 'http://localhost:5000', 'http://localhost:5173' ],
+    origin: ['http://localhost:3000', 'http://localhost:5000', 'http://localhost:5173', 'http://localhost:5174' ],
     credentials: true
 }));
 app.use(express.json());
 app.use(session(sessionConfig));
 
 // Routes
-app.use('/api/utilisateurs', UtilisateursRoutes); 
+app.use('/api/users', UtilisateursRoutes); 
 app.use('/api/messages', messageRoutes);
 app.use('/api/respos', InspRoutes);
 app.use('/api/Prod', ProdRoutes);
