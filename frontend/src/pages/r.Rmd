@@ -1,0 +1,15 @@
+---
+title: "Untitled"
+author: "roland"
+date: "2024-11-13"
+output:
+  html_document: default
+  pdf_document: default
+---
+```{r}
+setwd("C:/Users/habib/OneDrive/Desktop/Apprendre R")
+```
+
+
+```{r}
+getwd()

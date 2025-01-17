@@ -33,7 +33,7 @@ async function insererAdmin() {
   try {
     console.log('Tentative d\'insertion de l\'administrateur...');
     const admin = new Administrateur({
-      email: 'roland@gmail.com',
+      email: 'tchor1@gmail.com',
       password: '1234',
       role: 'admin'
     });
